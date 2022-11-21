@@ -21,6 +21,7 @@ Unified sink (Batch and Stream)
 
 DynamoDbSyncSink (DataStream API only)
 - [ ] checkpointing
+- [ ] error handling (what to do after 3 failures)
 
 DynamoDbAsyncSink (DataStream API only)
 - [ ] implement
