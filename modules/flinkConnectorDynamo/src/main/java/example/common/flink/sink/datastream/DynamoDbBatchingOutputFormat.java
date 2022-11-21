@@ -1,10 +1,11 @@
 package example.common.flink.sink.datastream;
 
+import example.common.flink.sink.aws.DynamoDbClientUtil;
 import org.apache.flink.api.common.io.RichOutputFormat;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.BatchWriteItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.WriteRequest;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -28,24 +30,23 @@ implements Flushable {
 
     private static final Logger LOG = LoggerFactory.getLogger(DynamoDbBatchingOutputFormat.class);
     protected transient DynamoDbClient ddb;
-    protected transient ClientOverrideConfiguration config;
+    protected Properties configProps;
     private final AtomicInteger recordCount = new AtomicInteger(0);
 
-    public DynamoDbBatchingOutputFormat(ClientOverrideConfiguration config) {
-        LOG.info("Creating output format with config: {}", config);
-        this.config = config;
+    public DynamoDbBatchingOutputFormat(Properties configProps) {
+        LOG.info("Creating output format with config: {}", configProps);
+        this.configProps = Preconditions.checkNotNull(configProps);
     }
 
     @Override
     public void configure(Configuration parameters) {
-        LOG.info("config: {}", config);
-        LOG.info("configure() is called: {}", parameters);
+        LOG.info("configuring OutputFormat params {}, config {}", parameters, configProps);
     }
 
     @Override
     public void open(int taskNumber, int numTasks) throws IOException {
         try {
-            ddb = DynamoDbClient.builder().overrideConfiguration(config).build();
+            ddb = DynamoDbClientUtil.build(configProps);
             LOG.info("List tables: {}", ddb.listTables());
         } catch (Exception e) {
             throw new IOException("unable to open DynamoDB connection", e);
