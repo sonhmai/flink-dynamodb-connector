@@ -47,7 +47,8 @@ object Dependencies {
   )
 
   lazy val AWSDynamoDeps: Seq[ModuleID] = Seq(
-    "software.amazon.awssdk" % "dynamodb" % AWSSDKVersion
+    "software.amazon.awssdk" % "dynamodb" % AWSSDKVersion,
+    "software.amazon.awssdk" % "dynamodb-enhanced" % AWSSDKVersion
   )
 
   lazy val AWSDeps: Seq[ModuleID] = Seq(
