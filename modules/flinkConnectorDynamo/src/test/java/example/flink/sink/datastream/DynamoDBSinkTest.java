@@ -5,7 +5,8 @@ import example.common.flink.sink.datastream.DynamoDbBatchingOutputFormat;
 import example.common.flink.sink.datastream.DynamoDbSyncSink;
 import example.flink.sink.DockerLocalstack;
 import example.flink.sink.TestFixture;
-import example.flink.sink.fixture.DynamoDbBooksTable;
+import example.flink.sink.fixture.DynamoDbBooksRepo;
+import example.flink.sink.fixture.TestEntry;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -19,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.localstack.LocalStackContainer;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
-import software.amazon.awssdk.services.dynamodb.model.*;
 
 import java.util.*;
 
@@ -38,6 +38,7 @@ public class DynamoDBSinkTest {
       );
   private final DockerLocalstack dockerLocalstack = new DockerLocalstack();
   private final DynamoDbClient ddb = createDynamoDbClient(getDynamoDbConfig());
+  private final DynamoDbBooksRepo booksRepo = new DynamoDbBooksRepo(ddb);
   private static final Logger LOG = LoggerFactory.getLogger(DynamoDBSinkTest.class);
 
   @BeforeAll
@@ -48,7 +49,7 @@ public class DynamoDBSinkTest {
     );
   }
 
-  private DynamoDbBatchingOutputFormat<TestFixture.TestEntry> createOutputFormat() {
+  private DynamoDbBatchingOutputFormat<TestEntry> createOutputFormat() {
     return new DynamoDbBatchingOutputFormatTestEntry(getDynamoDbConfig());
   }
 
@@ -71,15 +72,15 @@ public class DynamoDBSinkTest {
 
   @Test
   public void testInsert() throws Exception {
-    DynamoDbBooksTable.createTable(this.ddb);
+    DynamoDbBooksRepo.createTable(this.ddb);
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
     env.setRestartStrategy(new RestartStrategies.NoRestartStrategyConfiguration());
     env.setParallelism(1);
-    DataStream<TestFixture.TestEntry> ds = env.fromElements(TestFixture.TEST_DATA);
+    DataStream<TestEntry> ds = env.fromElements(TestFixture.TEST_DATA);
     ds.addSink(new DynamoDbSyncSink<>(createOutputFormat()));
     env.execute();
 
-    assertThat(DynamoDbBooksTable.selectBooks(this.ddb))
+    assertThat(booksRepo.getAllBooks())
         .isEqualTo(new HashSet<>(Arrays.asList(TestFixture.TEST_DATA)));
   }
 
