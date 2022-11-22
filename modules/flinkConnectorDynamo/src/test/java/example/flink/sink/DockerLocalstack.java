@@ -9,6 +9,8 @@ import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
+import java.net.URI;
+
 public class DockerLocalstack {
   private static final DockerImageName LOCALSTACK_IMAGE =
       DockerImageName.parse("localstack/localstack:0.13.3");
@@ -41,6 +43,10 @@ public class DockerLocalstack {
 
   public String getSecretKey() {
     return localstack.getSecretKey();
+  }
+
+  public URI getEndpointOverride(LocalStackContainer.Service service) {
+    return localstack.getEndpointOverride(service);
   }
 
 }
