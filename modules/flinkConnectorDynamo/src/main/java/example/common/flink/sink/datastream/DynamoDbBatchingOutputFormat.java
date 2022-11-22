@@ -7,22 +7,19 @@ import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
-import software.amazon.awssdk.services.dynamodb.model.BatchWriteItemRequest;
-import software.amazon.awssdk.services.dynamodb.model.ListTablesRequest;
-import software.amazon.awssdk.services.dynamodb.model.WriteRequest;
+import software.amazon.awssdk.services.dynamodb.model.*;
 
 import java.io.Flushable;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.io.Serializable;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A DynamoDB OutputFormat that supports batching records before writing to db
  */
-public class DynamoDbBatchingOutputFormat<In>
+public abstract class DynamoDbBatchingOutputFormat<In>
     extends RichOutputFormat<In>
     implements Flushable {
 
@@ -31,6 +28,7 @@ public class DynamoDbBatchingOutputFormat<In>
 
     private static final Logger LOG = LoggerFactory.getLogger(DynamoDbBatchingOutputFormat.class);
     protected transient DynamoDbClient ddb;
+    protected transient HashSet<In> buffer;
     protected Properties configProps;
     private final AtomicInteger recordCount = new AtomicInteger(0);
 
@@ -54,6 +52,7 @@ public class DynamoDbBatchingOutputFormat<In>
     @Override
     public void open(int taskNumber, int numTasks) throws IOException {
         try {
+            buffer = new HashSet<>();
             ddb = DynamoDbClientUtil.build(configProps);
             checkConnection(ddb);
         } catch (Exception e) {
@@ -65,10 +64,12 @@ public class DynamoDbBatchingOutputFormat<In>
     @Override
     public synchronized void writeRecord(In record) throws IOException {
         // this is called for every record
+        this.buffer.add(record);
         int count = recordCount.incrementAndGet();
         LOG.info("Record count: {}", count);
         if (count > DEFAULT_FLUSH_MAX_SIZE) {
             flush();
+            this.buffer.clear();
             recordCount.set(0);
         }
     }
@@ -76,19 +77,9 @@ public class DynamoDbBatchingOutputFormat<In>
     @Override
     public void close() throws IOException {
         // TODO - flush all before closing
-        LOG.info("Closing DynamoDb client...");
+        LOG.info("Flushing remaining records in buffer before closing DynamoDb client...");
+        flush();
+        this.buffer.clear();
         ddb.close();
-    }
-
-    @Override
-    public void flush() throws IOException {
-        // TODO - implement retries
-        LOG.info("Flushing records to DynamoDB...");
-        Map<String, Collection<WriteRequest>> requestItems = new HashMap<>();
-        // TODO - add records to Hashmap
-        BatchWriteItemRequest bwiRequest = BatchWriteItemRequest.builder()
-            .requestItems(requestItems)
-            .build();
-        ddb.batchWriteItem(bwiRequest);
     }
 }

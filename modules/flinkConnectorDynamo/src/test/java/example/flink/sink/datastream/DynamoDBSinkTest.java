@@ -5,6 +5,7 @@ import example.common.flink.sink.datastream.DynamoDbBatchingOutputFormat;
 import example.common.flink.sink.datastream.DynamoDbSyncSink;
 import example.flink.sink.DockerLocalstack;
 import example.flink.sink.TestFixture;
+import example.flink.sink.fixture.DynamoDbBooksTable;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -17,10 +18,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.localstack.LocalStackContainer;
-import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
-import software.amazon.awssdk.services.dynamodb.waiters.DynamoDbWaiter;
 
 import java.util.*;
 
@@ -37,7 +36,6 @@ public class DynamoDBSinkTest {
           .setNumberTaskManagers(1)
           .build()
       );
-  private static final String TABLE_NAME = "books";
   private final DockerLocalstack dockerLocalstack = new DockerLocalstack();
   private final DynamoDbClient ddb = createDynamoDbClient(getDynamoDbConfig());
   private static final Logger LOG = LoggerFactory.getLogger(DynamoDBSinkTest.class);
@@ -51,7 +49,7 @@ public class DynamoDBSinkTest {
   }
 
   private DynamoDbBatchingOutputFormat<TestFixture.TestEntry> createOutputFormat() {
-    return new DynamoDbBatchingOutputFormat<>(getDynamoDbConfig());
+    return new DynamoDbBatchingOutputFormatTestEntry(getDynamoDbConfig());
   }
 
   private DynamoDbClient createDynamoDbClient(Properties configProps) {
@@ -73,7 +71,7 @@ public class DynamoDBSinkTest {
 
   @Test
   public void testInsert() throws Exception {
-    createBooksTable(this.ddb);
+    DynamoDbBooksTable.createTable(this.ddb);
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
     env.setRestartStrategy(new RestartStrategies.NoRestartStrategyConfiguration());
     env.setParallelism(1);
@@ -81,57 +79,9 @@ public class DynamoDBSinkTest {
     ds.addSink(new DynamoDbSyncSink<>(createOutputFormat()));
     env.execute();
 
-    assertThat(selectBooks(this.ddb))
-        .isEqualTo(Arrays.asList(TestFixture.TEST_DATA));
+    assertThat(DynamoDbBooksTable.selectBooks(this.ddb))
+        .isEqualTo(new HashSet<>(Arrays.asList(TestFixture.TEST_DATA)));
   }
 
-  public CreateTableResponse createBooksTable(DynamoDbClient ddb) {
-    AttributeDefinition attributeDefinition = AttributeDefinition
-        .builder()
-        .attributeName("id")
-        .attributeType(ScalarAttributeType.S)
-        .build();
-    KeySchemaElement keySchemaElement = KeySchemaElement
-        .builder()
-        .attributeName("id")
-        .keyType(KeyType.HASH)
-        .build();
-    CreateTableRequest request = CreateTableRequest
-        .builder()
-        .tableName(TABLE_NAME)
-        .attributeDefinitions(attributeDefinition)
-        .keySchema(keySchemaElement)
-        .provisionedThroughput(ProvisionedThroughput.builder()
-            .readCapacityUnits(10L)
-            .writeCapacityUnits(10L)
-            .build())
-        .build();
-    CreateTableResponse response = ddb.createTable(request);
-
-    // wait until table is created, table creation is async per aws doc
-    DescribeTableRequest describeTableRequest = DescribeTableRequest
-        .builder()
-        .tableName(TABLE_NAME)
-        .build();
-    DynamoDbWaiter waiter = ddb.waiter();
-    waiter.waitUntilTableExists(describeTableRequest);
-
-    LOG.info("Created table, response: {}", response);
-    return response;
-  }
-
-  private List<TestFixture.TestEntry> selectBooks(DynamoDbClient ddb) {
-    List<TestFixture.TestEntry> books = new ArrayList<>();
-    // TODO - query dynamodb
-    ScanRequest scanRequest = ScanRequest.builder()
-        .tableName(TABLE_NAME)
-        .build();
-    ScanResponse response = ddb.scan(scanRequest);
-    for (Map<String, AttributeValue> item : response.items()) {
-      LOG.info("Item: {}", item);
-      Set<String> keys = item.keySet();
-      LOG.info("Keys: {}", keys);
-    }
-    return books;
-  }
 }
+
