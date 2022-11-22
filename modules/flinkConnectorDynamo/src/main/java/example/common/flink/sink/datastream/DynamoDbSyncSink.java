@@ -32,6 +32,7 @@ public class DynamoDbSyncSink<In> extends RichSinkFunction<In> implements Checkp
     @Override
     public void close() throws Exception {
         LOG.info("Closing dynamodb sink function...");
+        outputFormat.close();
     }
 
     @Override

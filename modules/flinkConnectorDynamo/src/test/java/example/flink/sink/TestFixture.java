@@ -16,7 +16,7 @@ public class TestFixture {
             new TestEntry(1007, ("A Teaspoon of Java 1.5"), ("Kevin Jones"), 77.77, 77),
             new TestEntry(1008, ("A Teaspoon of Java 1.6"), ("Kevin Jones"), 88.88, 88),
             new TestEntry(1009, ("A Teaspoon of Java 1.7"), ("Kevin Jones"), 99.99, 99),
-            new TestEntry(1010, ("A Teaspoon of Java 1.8"), ("Kevin Jones"), null, 1010)
+            new TestEntry(1010, ("A Teaspoon of Java 1.8"), ("Kevin Jones"), 12.12, 1010)
     };
 
     public static class TestEntry implements Serializable {
