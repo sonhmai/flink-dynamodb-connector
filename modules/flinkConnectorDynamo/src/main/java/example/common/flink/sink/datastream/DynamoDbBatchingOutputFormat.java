@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.BatchWriteItemRequest;
+import software.amazon.awssdk.services.dynamodb.model.ListTablesRequest;
 import software.amazon.awssdk.services.dynamodb.model.WriteRequest;
 
 import java.io.Flushable;
@@ -22,8 +23,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * A DynamoDB OutputFormat that supports batching records before writing to db
  */
 public class DynamoDbBatchingOutputFormat<In>
-extends RichOutputFormat<In>
-implements Flushable {
+    extends RichOutputFormat<In>
+    implements Flushable {
 
     public static final int DEFAULT_FLUSH_MAX_SIZE = 2;
     public static final long DEFAULT_FLUSH_INTERVAL_MILLIS = 100L;
@@ -43,11 +44,18 @@ implements Flushable {
         LOG.info("configuring OutputFormat params {}, config {}", parameters, configProps);
     }
 
+    private void checkConnection(DynamoDbClient ddb) {
+        ListTablesRequest listTablesRequest = ListTablesRequest
+            .builder()
+            .build();
+        LOG.info("List tables: {}", ddb.listTables(listTablesRequest));
+    }
+
     @Override
     public void open(int taskNumber, int numTasks) throws IOException {
         try {
             ddb = DynamoDbClientUtil.build(configProps);
-            LOG.info("List tables: {}", ddb.listTables());
+            checkConnection(ddb);
         } catch (Exception e) {
             throw new IOException("unable to open DynamoDB connection", e);
         }
@@ -79,8 +87,8 @@ implements Flushable {
         Map<String, Collection<WriteRequest>> requestItems = new HashMap<>();
         // TODO - add records to Hashmap
         BatchWriteItemRequest bwiRequest = BatchWriteItemRequest.builder()
-                .requestItems(requestItems)
-                .build();
+            .requestItems(requestItems)
+            .build();
         ddb.batchWriteItem(bwiRequest);
     }
 }
