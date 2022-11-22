@@ -1,7 +1,7 @@
 package example.flink.sink.datastream;
 
 import example.common.flink.sink.datastream.DynamoDbBatchingOutputFormat;
-import example.flink.sink.TestFixture;
+import example.flink.sink.fixture.TestEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class DynamoDbBatchingOutputFormatTestEntry
-    extends DynamoDbBatchingOutputFormat<TestFixture.TestEntry> {
+    extends DynamoDbBatchingOutputFormat<TestEntry> {
 
     private static final Logger LOG = LoggerFactory.getLogger(DynamoDbBatchingOutputFormatTestEntry.class);
 
@@ -26,7 +26,7 @@ public class DynamoDbBatchingOutputFormatTestEntry
         // TODO - implement retries
         LOG.info("Flushing records to DynamoDB...");
         Collection<WriteRequest> writeRequests = new ArrayList<>();
-        for (TestFixture.TestEntry testEntry : buffer) {
+        for (TestEntry testEntry : buffer) {
             HashMap<String, AttributeValue> writeAttributes = new HashMap<>();
             // TODO - make this model independent, currently hardcoding the attribute names
             writeAttributes.put("id", AttributeValue
