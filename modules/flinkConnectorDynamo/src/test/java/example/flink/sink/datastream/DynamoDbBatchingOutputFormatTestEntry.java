@@ -31,7 +31,7 @@ public class DynamoDbBatchingOutputFormatTestEntry
             // TODO - make this model independent, currently hardcoding the attribute names
             writeAttributes.put("id", AttributeValue
                 .builder()
-                .s(testEntry.id.toString())
+                .n(testEntry.id.toString())
                 .build()
             );
             writeAttributes.put("title", AttributeValue
