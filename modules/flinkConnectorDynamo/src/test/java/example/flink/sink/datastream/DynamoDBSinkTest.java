@@ -72,7 +72,7 @@ public class DynamoDBSinkTest {
 
   @Test
   public void testInsert() throws Exception {
-    DynamoDbBooksRepo.createTable(this.ddb);
+    booksRepo.createTable();
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
     env.setRestartStrategy(new RestartStrategies.NoRestartStrategyConfiguration());
     env.setParallelism(1);
