@@ -16,7 +16,7 @@ sbt test
 
 ## TODO
 Unified sink (Batch and Stream)
-- [ ] implement DynamoDbUnifiedSink
+- [x] implement DynamoDbUnifiedSink
 - [ ] checkpointing
 
 DynamoDbSyncSink (DataStream API only)
