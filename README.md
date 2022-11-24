@@ -14,9 +14,13 @@ sbt compile
 sbt test 
 ```
 
+## Knowledge
+See NOTES.md
+
 ## TODO
 Unified sink (Batch and Stream)
 - [x] implement DynamoDbUnifiedSink
+- [ ] use Flink State interface instead my own `HashSet<In> buffer`
 - [ ] checkpointing
 
 DynamoDbSyncSink (DataStream API only)
