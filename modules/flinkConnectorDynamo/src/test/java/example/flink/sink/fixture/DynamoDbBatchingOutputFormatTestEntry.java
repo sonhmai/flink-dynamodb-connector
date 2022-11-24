@@ -1,7 +1,6 @@
-package example.flink.sink.datastream;
+package example.flink.sink.fixture;
 
 import example.common.flink.sink.datastream.DynamoDbBatchingOutputFormat;
-import example.flink.sink.fixture.TestEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;

@@ -12,7 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 
-public class DynamoDbSyncSink<In> extends RichSinkFunction<In> implements CheckpointedFunction {
+public class DynamoDbSyncSink<In>
+    extends RichSinkFunction<In>
+    implements CheckpointedFunction {
 
     private final DynamoDbBatchingOutputFormat<In> outputFormat;
     private static final Logger LOG = LoggerFactory.getLogger(DynamoDbSyncSink.class);
@@ -44,6 +46,7 @@ public class DynamoDbSyncSink<In> extends RichSinkFunction<In> implements Checkp
         outputFormat.writeRecord(value);
     }
 
+    // checkpointing
     @Override
     public void snapshotState(FunctionSnapshotContext context) throws Exception {
         LOG.info("Snapshotting dynamodb sink state...");
