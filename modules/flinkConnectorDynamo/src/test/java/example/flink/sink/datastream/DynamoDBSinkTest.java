@@ -5,6 +5,7 @@ import example.common.flink.sink.datastream.DynamoDbBatchingOutputFormat;
 import example.common.flink.sink.datastream.DynamoDbSyncSink;
 import example.flink.sink.DockerLocalstack;
 import example.flink.sink.TestFixture;
+import example.flink.sink.fixture.DynamoDbBatchingOutputFormatTestEntry;
 import example.flink.sink.fixture.DynamoDbBooksRepo;
 import example.flink.sink.fixture.TestEntry;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
