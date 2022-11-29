@@ -1,6 +1,12 @@
 package example.flink.sink.fixture;
 
 import example.common.flink.sink.datastream.DynamoDbBatchingOutputFormat;
+import org.apache.flink.api.common.state.ListState;
+import org.apache.flink.api.common.state.ListStateDescriptor;
+import org.apache.flink.api.common.typeinfo.TypeHint;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.runtime.state.FunctionInitializationContext;
+import org.apache.flink.runtime.state.FunctionSnapshotContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
@@ -15,6 +21,8 @@ public class DynamoDbBatchingOutputFormatTestEntry
     extends DynamoDbBatchingOutputFormat<TestEntry> {
 
     private static final Logger LOG = LoggerFactory.getLogger(DynamoDbBatchingOutputFormatTestEntry.class);
+
+    private transient ListState<TestEntry> checkpointedState;
 
     public DynamoDbBatchingOutputFormatTestEntry(Properties configProps) {
         super(configProps);
@@ -68,5 +76,29 @@ public class DynamoDbBatchingOutputFormatTestEntry
             .requestItems(requestItems)
             .build();
         ddb.batchWriteItem(bwiRequest);
+    }
+
+    @Override
+    public void initializeState(FunctionInitializationContext context) throws Exception {
+        ListStateDescriptor<TestEntry> descriptor =
+            new ListStateDescriptor<>(
+                "bufferred-elements",
+                TypeInformation.of(new TypeHint<TestEntry>() {
+                })
+            );
+        checkpointedState = context.getOperatorStateStore().getListState(descriptor);
+        if (context.isRestored()) {
+            for(TestEntry element: buffer) {
+                checkpointedState.add(element);
+            }
+        }
+    }
+
+    @Override
+    public void snapshotState(FunctionSnapshotContext context) throws Exception {
+        checkpointedState.clear();
+        for (TestEntry element: buffer) {
+            checkpointedState.add(element);
+        }
     }
 }

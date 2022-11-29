@@ -18,12 +18,13 @@ sbt test
 See NOTES.md
 
 ## TODO
-Unified sink (Batch and Stream)
-- [x] implement DynamoDbUnifiedSink
-- [ ] use Flink State interface instead my own `HashSet<In> buffer`
-- [ ] checkpointing
-
 DynamoDbSyncSink (DataStream API only)
+- [x] implement DynamoDbUnifiedSink
+- [x] use Flink State interface instead my own `HashSet<In> buffer`
+- [x] checkpointing
+- [ ] checkpointing test
+
+Unified sink (Batch and Stream)
 - [ ] checkpointing
 - [ ] error handling (what to do after 3 failures)
 

@@ -2,18 +2,20 @@ package example.common.flink.sink.datastream;
 
 import example.common.flink.sink.aws.DynamoDbClientUtil;
 import org.apache.flink.api.common.io.RichOutputFormat;
+import org.apache.flink.api.common.state.ListState;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.runtime.state.FunctionInitializationContext;
+import org.apache.flink.runtime.state.FunctionSnapshotContext;
 import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
-import software.amazon.awssdk.services.dynamodb.model.*;
+import software.amazon.awssdk.services.dynamodb.model.ListTablesRequest;
 
 import java.io.Flushable;
 import java.io.IOException;
-import java.io.Serializable;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashSet;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -29,6 +31,7 @@ public abstract class DynamoDbBatchingOutputFormat<In>
     private static final Logger LOG = LoggerFactory.getLogger(DynamoDbBatchingOutputFormat.class);
     protected transient DynamoDbClient ddb;
     protected transient HashSet<In> buffer;
+    private transient ListState<In> checkpointedState;
     protected Properties configProps;
     private final AtomicInteger recordCount = new AtomicInteger(0);
 
@@ -81,5 +84,11 @@ public abstract class DynamoDbBatchingOutputFormat<In>
         flush();
         this.buffer.clear();
         ddb.close();
+    }
+
+    public void initializeState(FunctionInitializationContext context) throws Exception {
+    }
+
+    public void snapshotState(FunctionSnapshotContext context) throws Exception {
     }
 }
