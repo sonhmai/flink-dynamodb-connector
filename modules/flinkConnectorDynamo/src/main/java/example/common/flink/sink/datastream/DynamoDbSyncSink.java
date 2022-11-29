@@ -50,10 +50,12 @@ public class DynamoDbSyncSink<In>
     @Override
     public void snapshotState(FunctionSnapshotContext context) throws Exception {
         LOG.info("Snapshotting dynamodb sink state...");
+        outputFormat.snapshotState(context);
     }
 
     @Override
     public void initializeState(FunctionInitializationContext context) throws Exception {
         LOG.info("Initializing dynamodb sink state...");
+        outputFormat.initializeState(context);
     }
 }
